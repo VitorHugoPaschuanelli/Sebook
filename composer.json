@@ -1,0 +1,18 @@
+{
+    "name": "sebook/sebook",
+    "description": "Sistema local de controle de estoque para sebos - TG em ADS.",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.4",
+        "ext-pdo": "*",
+        "ext-pdo_sqlite": "*",
+        "ext-mbstring": "*"
+    },
+    "autoload": { "psr-4": { "Sebook\\": "src/" } },
+    "scripts": {
+        "start": "@php -S 127.0.0.1:8000 -t public",
+        "test": "@php tests/check.php"
+    },
+    "config": { "sort-packages": true }
+}
