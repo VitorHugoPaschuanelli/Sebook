@@ -38,7 +38,9 @@ function request(string $path, ?array $data = null): array {
     return ['status'=>(int)$status[1], 'body'=>$body, 'location'=>$location];
 }
 $home = request('/');
-verify($home['status'] === 200 && str_contains($home['body'], 'Visão geral'), 'Página inicial');
+verify($home['status'] === 200 && str_contains($home['body'], 'Acervo do sebo'), 'Abertura direta no acervo');
+verify(!str_contains($home['body'], 'Visão geral'), 'Página inicial antiga removida');
+verify(request('/?page=home')['status'] === 302, 'Atalho antigo redireciona ao acervo');
 foreach (['/assets/bootstrap/bootstrap.min.css', '/assets/bootstrap/bootstrap.bundle.min.js', '/style.css', '/app.js'] as $asset) {
     verify(request($asset)['status'] === 200, 'Arquivo público: ' . $asset);
 }
@@ -48,7 +50,7 @@ foreach (['/composer.json', '/database/sebook.sqlite', '/.git/config', '/?page=i
 $form = request('/?page=new');
 preg_match('/name="csrf" value="([a-f0-9]+)"/', $form['body'], $matches);
 $token = $matches[1] ?? throw new RuntimeException('Token ausente');
-$data = ['csrf'=>$token, 'action'=>'create', 'title'=>'Livro <script>alert(1)</script>', 'author'=>'Autora de teste', 'price'=>'29,90', 'quantity'=>'3', 'minimum_stock'=>'1', 'condition'=>'Bom', 'category'=>'Literatura', 'location'=>'A1'];
+$data = ['csrf'=>$token, 'action'=>'create', 'title'=>'Livro <script>alert(1)</script>', 'author'=>'Autora de teste', 'price'=>'29,90', 'quantity'=>'3', 'minimum_stock'=>'1', 'condition'=>'Bom', 'category'=>'Literatura', 'location'=>'A1', 'edition'=>'1ª edição', 'publication_year'=>'1950','binding'=>'Capa dura','provenance'=>'Troca','cost'=>'10,90','features'=>['signed','yellowed'],'condition_notes'=>'Miolo preservado <teste>'];
 verify(request('/?page=new', array_replace($data, ['csrf'=>'incorreto']))['status'] === 403, 'Bloqueio CSRF');
 $invalid = request('/?page=new', array_replace($data, ['title'=>'']));
 verify($invalid['status'] === 422 && str_contains($invalid['body'],'Autora de teste'), 'Validação preserva formulário');
@@ -57,6 +59,10 @@ verify($created['status'] === 303 && str_contains($created['location'], 'id=1'),
 $detail = request($created['location']);
 verify($detail['status'] === 200 && str_contains($detail['body'], '&lt;script&gt;') && !str_contains($detail['body'], '<script>alert(1)</script>'), 'Escape HTML');
 verify(str_contains($detail['body'], 'R$ 29,90') && str_contains($detail['body'], 'Cadastro inicial'), 'Preço e histórico inicial');
+verify(str_contains($detail['body'], 'Autografado pelo autor') && str_contains($detail['body'], 'Miolo preservado &lt;teste&gt;'), 'Características e conservação na ficha');
+verify(str_contains(request('/?page=edit&id=1')['body'], 'value="signed" checked'), 'Características preservadas na edição');
+verify(str_contains(request('/?page=books&condition=Bom&feature=signed')['body'], 'class="book-title"'), 'Filtro de conservação e autógrafo');
+verify(!str_contains(request('/?page=books&feature=stamp')['body'], 'class="book-title"'), 'Filtro de característica sem resultado');
 verify(request('/?page=edit&id=1')['status'] === 200, 'Formulário de edição');
 $updated = request('/?page=edit&id=1', array_replace($data, ['action'=>'update','title'=>'Livro revisado','quantity'=>'99']));
 verify($updated['status'] === 303, 'Edição');

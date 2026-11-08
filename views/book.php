@@ -5,6 +5,7 @@
 <?php if ($book['quantity'] <= $book['minimum_stock'] && !$book['archived']): ?><div class="alert alert-warning mt-3">Estoque baixo: o mínimo definido é <?= $book['minimum_stock'] ?> unidade(s).</div><?php endif; ?>
 <dl class="detail-grid mt-4"><?php foreach (['category'=>'Categoria','publisher'=>'Editora','isbn'=>'ISBN','condition'=>'Conservação','location'=>'Localização','minimum_stock'=>'Estoque mínimo'] as $key=>$label): ?><div><dt><?= $label ?></dt><dd><?= e($book[$key] === '' ? 'Não informado' : $book[$key]) ?></dd></div><?php endforeach; ?></dl>
 <?php if ($book['notes']): ?><h2 class="h6">Observações</h2><p class="preserve-lines"><?= e($book['notes']) ?></p><?php endif; ?>
+<?php require __DIR__.'/book-details.php'; ?>
 <div class="archive-area"><form method="post" <?= !$book['archived'] ? 'data-confirm="Arquivar este livro? O cadastro e o histórico serão preservados."' : '' ?>><?php csrf(); ?><input type="hidden" name="action" value="<?= $book['archived'] ? 'restore' : 'archive' ?>"><button class="btn btn-sm btn-outline-secondary" <?= !$book['archived'] && $book['quantity'] > 0 ? 'disabled' : '' ?>><?= $book['archived'] ? 'Reativar livro' : 'Arquivar livro' ?></button><?php if (!$book['archived'] && $book['quantity'] > 0): ?><span class="form-text d-block mt-2">O arquivamento fica disponível quando o saldo estiver zerado.</span><?php endif; ?></form></div>
 </section></div>
 <div class="col-lg-5"><section class="panel h-100"><h2>Movimentar estoque</h2><p class="section-description">Cada alteração fica registrada no histórico.</p>

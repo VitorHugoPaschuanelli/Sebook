@@ -25,9 +25,23 @@ document.querySelectorAll('form[method="post"]').forEach(form => {
     form.addEventListener('submit', event => {
         if (!event.defaultPrevented && form.checkValidity()) {
             form.querySelectorAll('button[type="submit"], button:not([type])').forEach(button => {
+                button.dataset.originalLabel = button.textContent;
                 button.disabled = true;
                 button.textContent = 'Salvando…';
             });
         }
+    });
+});
+
+const condition = document.querySelector('#condition');
+const guide = document.querySelector('#condition-guide');
+if (condition && guide) {
+    condition.addEventListener('change', () => { guide.textContent = condition.selectedOptions[0].dataset.guide; });
+}
+
+window.addEventListener('pageshow', () => {
+    document.querySelectorAll('button[data-original-label]').forEach(button => {
+        button.disabled = false;
+        button.textContent = button.dataset.originalLabel;
     });
 });

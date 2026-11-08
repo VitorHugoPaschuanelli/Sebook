@@ -29,8 +29,9 @@ function redirect(array $params, string $message): never {
     exit;
 }
 
-$page = field($_GET, 'page', 'home');
-if (!in_array($page, ['home', 'books', 'new', 'edit', 'book', 'history'], true)) {
+$page = field($_GET, 'page', 'books');
+if ($page === 'home') { header('Location: /?page=books', true, 302); exit; }
+if (!in_array($page, ['books', 'new', 'edit', 'book', 'history'], true)) {
     http_response_code(404);
     exit('Página não encontrada.');
 }
@@ -84,13 +85,18 @@ try {
     $query = mb_substr(trim(field($_GET, 'q')), 0, 200);
     $status = field($_GET, 'status');
     $category = field($_GET, 'category');
-    if ($page === 'books') { $listing = $inventory->search($query, $status, $category, $number); }
-    if ($page === 'home') { $low = $inventory->search('', 'low'); $recent = $inventory->history(); }
+    $conditionFilter = field($_GET, 'condition');
+    $featureFilter = field($_GET, 'feature');
+    if ($page === 'books') { $listing = $inventory->search($query, $status, $category, $number, $conditionFilter, $featureFilter); }
     if ($page === 'book' || $page === 'history') { $history = $inventory->history($page === 'book' ? $id : null, $number); }
     if ($page === 'new' || $page === 'edit') {
-        $values = $input ?: ($book ? array_merge($book, ['price'=>number_format($book['price_cents']/100, 2, ',', '')]) : ['condition'=>'Bom','quantity'=>'0','minimum_stock'=>'1','price'=>'']);
+        $values = $input ?: ($book ? array_merge($book, [
+            'price'=>number_format($book['price_cents']/100, 2, ',', ''),
+            'cost'=>$book['cost_cents'] === null ? '' : number_format($book['cost_cents']/100, 2, ',', ''),
+            'features'=>json_decode($book['features'], true),
+        ]) : ['condition'=>'Bom','quantity'=>'0','minimum_stock'=>'1','price'=>'','language'=>'Português']);
     }
-    $titles = ['home'=>'Visão geral', 'books'=>'Acervo', 'new'=>'Cadastrar livro', 'edit'=>'Editar livro', 'book'=>$book['title'] ?? 'Livro', 'history'=>'Movimentações'];
+    $titles = ['books'=>'Acervo do sebo', 'new'=>'Cadastrar livro', 'edit'=>'Editar livro', 'book'=>$book['title'] ?? 'Livro', 'history'=>'Movimentações'];
     $title = $titles[$page];
     require dirname(__DIR__) . '/views/layout.php';
 } catch (Throwable $exception) {
