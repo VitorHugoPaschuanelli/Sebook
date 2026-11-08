@@ -9,7 +9,23 @@ use PDO;
 
 final class Inventory
 {
-    public const CONDITIONS = ['Novo', 'Ótimo', 'Bom', 'Regular'];
+    public const CONDITIONS = ['Novo', 'Ótimo', 'Bom', 'Regular', 'Ruim'];
+    public const CONDITION_GUIDE = [
+        'Novo' => 'Sem uso e sem marcas aparentes.',
+        'Ótimo' => 'Poucos sinais de manuseio; capa e miolo bem preservados.',
+        'Bom' => 'Marcas leves de uso; leitura e estrutura preservadas.',
+        'Regular' => 'Desgaste evidente ou anotações; descreva as limitações.',
+        'Ruim' => 'Avarias importantes; registre páginas soltas, faltantes ou outros danos.',
+    ];
+    public const BINDINGS = ['Brochura', 'Capa dura', 'Espiral', 'Outra'];
+    public const PROVENANCES = ['Compra', 'Troca', 'Doação', 'Consignação', 'Acervo próprio'];
+    public const FEATURES = [
+        'yellowed' => 'Páginas amareladas', 'annotations' => 'Grifos ou anotações',
+        'stains' => 'Manchas', 'loose_pages' => 'Páginas soltas',
+        'missing_pages' => 'Páginas faltantes', 'damaged_cover' => 'Capa ou lombada avariada',
+        'stamp' => 'Carimbo de antigo dono', 'dedication' => 'Dedicatória',
+        'signed' => 'Autografado pelo autor', 'first_edition' => 'Primeira edição',
+    ];
     public const REASONS = [
         'entrada' => ['Compra', 'Doação recebida', 'Devolução', 'Correção'],
         'saida' => ['Venda', 'Doação realizada', 'Perda ou avaria', 'Correção'],
@@ -40,21 +56,48 @@ final class Inventory
     private function bookData(array $input): array
     {
         $data = [];
-        foreach (['title' => ['Título', 180, true], 'author' => ['Autor', 150, true], 'category' => ['Categoria', 80, false], 'publisher' => ['Editora', 100, false], 'isbn' => ['ISBN', 20, false], 'location' => ['Localização', 80, false], 'notes' => ['Observações', 2000, false]] as $field => [$label, $max, $required]) {
+        foreach (['title' => ['Título', 180, true], 'author' => ['Autor', 150, true], 'category' => ['Categoria', 80, false], 'publisher' => ['Editora', 100, false], 'isbn' => ['ISBN', 20, false], 'location' => ['Localização', 80, false], 'notes' => ['Observações', 2000, false], 'edition'=>['Edição ou volume',60,false], 'language'=>['Idioma',60,false], 'condition_notes'=>['Detalhes da conservação',1000,false]] as $field => [$label, $max, $required]) {
             $data[$field] = $this->text($input, $field, $label, $max, $required);
         }
         $data['condition'] = $this->text($input, 'condition', 'Estado de conservação', 20, true);
         if (!in_array($data['condition'], self::CONDITIONS, true)) {
             throw new DomainException('Selecione um estado de conservação válido.');
         }
-        $price = $this->text($input, 'price', 'Preço', 12, true);
-        if (!preg_match('/^\d{1,7}(?:[.,]\d{1,2})?$/D', $price)) {
-            throw new DomainException('Informe o preço sem separador de milhar, por exemplo 25,90.');
+        foreach (['binding'=>['Encadernação', self::BINDINGS], 'provenance'=>['Origem',self::PROVENANCES]] as $key=>[$label,$options]) {
+            $data[$key] = $this->text($input, $key, $label, 30);
+            if ($data[$key] !== '' && !in_array($data[$key], $options, true)) {
+                throw new DomainException("$label inválida.");
+            }
         }
-        $parts = preg_split('/[.,]/', $price);
-        $data['price_cents'] = (int) $parts[0] * 100 + (int) str_pad($parts[1] ?? '', 2, '0');
+        $year = $this->text($input, 'publication_year', 'Ano de publicação', 4);
+        if ($year !== '' && (!ctype_digit($year) || (int)$year < 1 || (int)$year > 2100)) {
+            throw new DomainException('Ano de publicação deve estar entre 1 e 2100, ou ficar em branco.');
+        }
+        $data['publication_year'] = $year === '' ? null : (int)$year;
+        $features = $input['features'] ?? [];
+        if (!is_array($features) || count($features) > count(self::FEATURES)) {
+            throw new DomainException('Selecione características válidas para o exemplar.');
+        }
+        foreach ($features as $feature) {
+            if (!is_string($feature) || !array_key_exists($feature, self::FEATURES)) {
+                throw new DomainException('Característica do exemplar inválida.');
+            }
+        }
+        $data['features'] = json_encode(array_values(array_unique($features)), JSON_THROW_ON_ERROR);
+        $data['price_cents'] = $this->amount($this->text($input, 'price', 'Preço', 12, true), 'Preço');
+        $cost = $this->text($input, 'cost', 'Custo de aquisição', 12);
+        $data['cost_cents'] = $cost === '' ? null : $this->amount($cost, 'Custo de aquisição');
         $data['minimum_stock'] = self::integer($input['minimum_stock'] ?? '', 'Estoque mínimo');
         return $data;
+    }
+
+    private function amount(string $value, string $label): int
+    {
+        if (!preg_match('/^\d{1,7}(?:[.,]\d{1,2})?$/D', $value)) {
+            throw new DomainException("$label: informe um valor sem separador de milhar, por exemplo 25,90.");
+        }
+        $parts = preg_split('/[.,]/', $value);
+        return (int)$parts[0] * 100 + (int)str_pad($parts[1] ?? '', 2, '0');
     }
 
     public function create(array $input): int
@@ -146,7 +189,7 @@ final class Inventory
         }
     }
 
-    public function search(string $query = '', string $status = '', string $category = '', int $page = 1): array
+    public function search(string $query = '', string $status = '', string $category = '', int $page = 1, string $condition = '', string $feature = ''): array
     {
         $where = ['archived = :archived'];
         $params = ['archived' => (int) ($status === 'archived')];
@@ -155,6 +198,11 @@ final class Inventory
             $params['query'] = mb_strtolower($query, 'UTF-8');
         }
         if ($category !== '') { $where[] = 'category = :category'; $params['category'] = $category; }
+        if ($condition !== '') { $where[] = 'condition = :condition'; $params['condition'] = $condition; }
+        if ($feature !== '') {
+            $where[] = 'EXISTS (SELECT 1 FROM json_each(books.features) WHERE value = :feature)';
+            $params['feature'] = $feature;
+        }
         if ($status === 'low') { $where[] = 'quantity <= minimum_stock'; }
         if ($status === 'zero') { $where[] = 'quantity = 0'; }
         if ($status === 'available') { $where[] = 'quantity > 0'; }

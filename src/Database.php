@@ -19,13 +19,21 @@ final class Database
         $db->exec('PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
         $db->sqliteCreateFunction('fold', static fn(string $value): string => mb_strtolower($value, 'UTF-8'), 1);
         $version = (int) $db->query('PRAGMA user_version')->fetchColumn();
-        if ($version > 1) {
+        if ($version > 2) {
             throw new RuntimeException('O banco foi criado por uma versão mais recente do Sebook.');
         }
-        if ($version === 0) {
+        if ($version < 2) {
+            // VACUUM INTO produz uma cópia consistente antes de alterar um banco existente.
+            if ($version > 0 && $path !== ':memory:') {
+                $backup = $path . '.before-v2-' . date('Ymd-His') . '-' . bin2hex(random_bytes(3)) . '.bak';
+                $db->exec('VACUUM INTO ' . $db->quote($backup));
+            }
             $db->beginTransaction();
             try {
-                $db->exec(file_get_contents(dirname(__DIR__) . '/database/schema.sql'));
+                if ($version === 0) {
+                    $db->exec(file_get_contents(dirname(__DIR__) . '/database/schema.sql'));
+                }
+                $db->exec(file_get_contents(dirname(__DIR__) . '/database/migrations/002_book_details.sql'));
                 $db->commit();
             } catch (\Throwable $error) {
                 $db->rollBack();
