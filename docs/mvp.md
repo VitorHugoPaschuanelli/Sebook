@@ -17,6 +17,16 @@ Permitir que um sebo organize seu acervo localmente, cadastre livros e acompanhe
 - Preço é um inteiro em centavos. O painel não representa receita, lucro ou valor de aquisição.
 - As datas são registradas no fuso de São Paulo.
 
+## Particularidades de sebos
+
+O acervo é a tela de entrada; não há uma página inicial separada. O visual usa fundos de papel e tons pastéis de amarelo e marrom, com títulos em fonte serifada e miniaturas tipográficas, sem capas fictícias de livros.
+
+Cada cadastro pode registrar edição/volume, ano de publicação (1 a 2100, opcional), idioma, encadernação, origem e custo unitário de aquisição. Campos desconhecidos ficam em branco. Custo zero e custo desconhecido são estados diferentes. A origem descreve o exemplar/lote; não implementa contabilidade de consignação ou saldo financeiro de trocas.
+
+A classificação de conservação é interna ao Sebook: Novo, Ótimo, Bom, Regular e Ruim. O formulário mostra orientações para cada opção. Grifos, manchas, amarelamento, páginas soltas ou faltantes, avarias na capa/lombada e carimbos podem ser marcados e detalhados em texto. Dedicatória, autógrafo e primeira edição só devem ser marcados após conferência. O filtro por característica ajuda a localizar tanto avarias quanto exemplares especiais.
+
+A versão 2 do banco adiciona campos sem recriar as tabelas. Antes de migrar um banco existente, `VACUUM INTO` gera uma cópia consistente `.bak`. A migração ocorre em transação e não altera saldos nem histórico. A versão inicial continua em `schema.sql`, seguida da migração incremental, inclusive em instalações novas.
+
 ## Dados
 
 `books` guarda dados do livro, preço, saldo atual, estoque mínimo, situação e datas. `movements` guarda livro, tipo, quantidade, saldo após, motivo, observação e data. A chave estrangeira mantém a relação e há índice para o histórico por livro. `PRAGMA user_version` identifica a versão do esquema.
@@ -33,4 +43,4 @@ Clientes, fornecedores, contas de acesso, caixa, emissão fiscal, relatórios fi
 
 ## Testes
 
-As verificações de regras cobrem cadastro, valores, busca, entrada, saída, estoque mínimo, arquivamento, reativação, rollback e preservação do saldo na edição. Os testes HTTP cobrem formulários, redirecionamentos, persistência, validação, CSRF, escape HTML, filtros e proteção dos caminhos privados. Os dados de teste são isolados do acervo real.
+As verificações de regras cobrem cadastro, valores, busca, entrada, saída, estoque mínimo, arquivamento, reativação, rollback e preservação do saldo na edição. Testes de catalogação cobrem os campos do sebo, filtros combinados, validação e limpeza de campos opcionais. Um banco antigo criado durante o teste verifica migração, cópia de segurança e preservação de dados. Os testes HTTP cobrem formulários, redirecionamentos, persistência, validação, CSRF, escape HTML, filtros e proteção dos caminhos privados. Os dados de teste são isolados do acervo real.

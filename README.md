@@ -4,13 +4,15 @@ Sistema local de controle de estoque para sebos, desenvolvido como Trabalho de G
 
 ## O que o MVP faz
 
-- Painel com títulos ativos, quantidade de exemplares, valor do acervo pelo preço de venda e alertas de estoque mínimo.
-- Cadastro e edição de livros: título, autor, categoria, editora, ISBN opcional, conservação, localização, preço e observações.
-- Busca por título, autor, ISBN, código ou localização; filtros de categoria e situação; paginação.
+- Abertura direta no acervo, com resumo de títulos ativos, exemplares, valor a preço de venda e alertas de reposição. A antiga página inicial foi removida.
+- Cadastro e edição de livros: título, autor, categoria, editora, ISBN opcional, edição/volume, ano, idioma e encadernação.
+- Conservação com guia por estado (Novo, Ótimo, Bom, Regular e Ruim), observações de avarias e marcações como páginas amareladas, grifos, carimbos, dedicatória, autógrafo e primeira edição.
+- Origem por compra, troca, doação, consignação ou acervo próprio; custo de aquisição por unidade, preço de venda e estante/prateleira.
+- Busca por título, autor, ISBN, código ou localização; filtros de categoria, situação, conservação e características; paginação.
 - Entradas e saídas com quantidade, motivo, observação, data e saldo após cada operação.
 - Bloqueio de estoque negativo e histórico preservado por transações SQLite.
 - Arquivamento de livros com saldo zerado e reativação do cadastro.
-- Interface responsiva em português com Bootstrap 5.3.8 local. O uso diário não depende de internet.
+- Interface responsiva em português, em tons de papel, amarelo pastel e marrom, com Bootstrap 5.3.8 local. O uso diário não depende de internet.
 
 ## Executar no Windows
 
@@ -32,7 +34,7 @@ O servidor escuta somente em `127.0.0.1`, com `public/` como raiz. Este MVP foi 
 
 ## Como usar
 
-1. Clique em **Cadastrar livro**, preencha título, autor, conservação, preço, quantidade inicial e estoque mínimo. Os outros campos são opcionais.
+1. Clique em **Cadastrar livro**, preencha título, autor, conservação, preço, quantidade inicial e estoque mínimo. Complete a ficha bibliográfica e as características que você tiver conferido. Os outros campos são opcionais.
 2. Use **Acervo** para pesquisar e abrir a ficha. Edições e condições de conservação diferentes podem ser cadastradas separadamente, mesmo com o mesmo ISBN.
 3. Na ficha, registre uma **Entrada** para repor exemplares ou uma **Saída** para venda, doação, perda ou correção. A quantidade deve ser inteira e positiva.
 4. Use **Editar cadastro** para alterar informações e preço. O saldo só muda por movimentações, mantendo o histórico.
@@ -40,6 +42,12 @@ O servidor escuta somente em `127.0.0.1`, com `public/` como raiz. Este MVP foi 
 6. Se um livro deixou de fazer parte do acervo, zere o saldo com o motivo adequado e use **Arquivar livro**. O filtro **Arquivados** permite localizar e reativar o cadastro.
 
 Preços são armazenados em centavos; digite `25,90` ou `25.90`, sem separador de milhar. O valor do acervo é a quantidade disponível multiplicada pelo preço de venda atual, não o faturamento. Datas usam o fuso `America/Sao_Paulo`.
+
+Deixe custo e ano em branco quando forem desconhecidos. Custo zero significa aquisição sem custo. O campo de origem registra a procedência do exemplar/lote; consignação não calcula comissão nem gera repasses. Use cadastros separados se os exemplares tiverem custos ou condições diferentes.
+
+## Atualização do banco
+
+Ao abrir um banco da primeira versão, o Sebook acrescenta os novos campos automaticamente. Antes disso, salva uma cópia consistente ao lado do banco, com nome `sebook.sqlite.before-v2-DATA-IDENTIFICADOR.bak`. Os cadastros, saldos e movimentações são mantidos. Campos novos ficam sem informação; nenhum estado ou característica adicional é presumido. Essa cópia também fica fora do Git. Se o backup não puder ser gravado, a migração não é iniciada.
 
 ## Backup e restauração
 
@@ -64,6 +72,7 @@ composer test:http
 - `src/`: conexão SQLite e regras de estoque, com autoload PSR-4 `Sebook\`.
 - `views/`: telas PHP da interface.
 - `database/schema.sql`: esquema inicial versionado; o banco local é ignorado.
+- `database/migrations/`: atualizações incrementais que preservam o banco existente.
 - `config/`: reservado para configurações futuras.
 - `storage/`: logs e arquivos temporários, ignorados pelo Git.
 - `tests/`: verificações do ambiente, regras e fluxo HTTP.
