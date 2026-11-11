@@ -169,7 +169,6 @@ final class Inventory
     private function applyMovement(int $id, string $type, int $quantity, string $reason, string $note): void
     {
         $delta = $type === 'entrada' ? $quantity : -$quantity;
-        // A alteração condicional e o histórico compartilham a mesma transação.
         $statement = $this->db->prepare('UPDATE books SET quantity = quantity + :delta, updated_at = :now WHERE id = :id AND archived = 0 AND quantity + :delta BETWEEN 0 AND 1000000');
         $statement->execute(['delta' => $delta, 'now' => date('Y-m-d H:i:s'), 'id' => $id]);
         if (!$statement->rowCount()) {
@@ -220,11 +219,6 @@ final class Inventory
     public function categories(): array
     {
         return $this->db->query("SELECT DISTINCT category FROM books WHERE category <> '' ORDER BY category")->fetchAll(PDO::FETCH_COLUMN);
-    }
-
-    public function summary(): array
-    {
-        return $this->db->query('SELECT COUNT(*) AS titles, COALESCE(SUM(quantity),0) AS units, COALESCE(SUM(quantity * price_cents),0) AS value, COALESCE(SUM(quantity <= minimum_stock),0) AS low FROM books WHERE archived = 0')->fetch();
     }
 
     public function history(?int $bookId = null, int $page = 1): array

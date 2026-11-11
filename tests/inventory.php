@@ -29,7 +29,7 @@ check($inventory->search('AÇÃO')['total'] === 1, 'Busca Unicode');
 check($inventory->search("' OR 1=1 --")['total'] === 0, 'Busca parametrizada');
 $inventory->move($id, ['type'=>'saida','quantity'=>'2','reason'=>'Venda']);
 check($inventory->find($id)['quantity'] === 1, 'Saída');
-check($inventory->summary()['low'] === 1, 'Alerta de estoque mínimo');
+check($inventory->search('', 'low')['total'] === 1, 'Filtro de estoque mínimo');
 rejects(fn() => $inventory->move($id, ['type'=>'saida','quantity'=>'2','reason'=>'Venda']));
 check($inventory->find($id)['quantity'] === 1 && $inventory->history($id)['total'] === 2, 'Rollback sem histórico falso');
 rejects(fn() => $inventory->move($id, ['type'=>'entrada','quantity'=>'0','reason'=>'Compra']));
@@ -43,14 +43,12 @@ check($inventory->search()['total'] === 0 && $inventory->search('', 'archived')[
 rejects(fn() => $inventory->move($id, ['type'=>'entrada','quantity'=>'1','reason'=>'Compra']));
 $inventory->archive($id, false);
 $inventory->move($id, ['type'=>'entrada','quantity'=>'5','reason'=>'Compra']);
-check($inventory->summary()['value'] === 12950, 'Valor do acervo');
 check($inventory->history($id)['movements'][0]['balance_after'] === 5, 'Saldo no histórico');
 foreach (['-1', '1.5', '1000001', []] as $quantity) { rejects(fn() => $inventory->create(array_replace($input, ['quantity'=>$quantity]))); }
 foreach (['-2', '1,234', 'abc'] as $price) { rejects(fn() => $inventory->create(array_replace($input, ['price'=>$price]))); }
 rejects(fn() => $inventory->create(array_replace($input, ['title'=>''])));
 rejects(fn() => $inventory->create(array_replace($input, ['condition'=>'Inválido'])));
 check($inventory->search()['total'] === 1, 'Cadastros inválidos não persistidos');
-// Simula falha ao gravar o histórico: o saldo também deve voltar ao valor anterior.
 $db->exec("CREATE TRIGGER fail_history BEFORE INSERT ON movements BEGIN SELECT RAISE(ABORT, 'falha simulada'); END");
 try { $inventory->move($id, ['type'=>'entrada','quantity'=>'1','reason'=>'Compra']); } catch (PDOException) {}
 check($inventory->find($id)['quantity'] === 5, 'Transação protege saldo de falha no histórico');

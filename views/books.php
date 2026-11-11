@@ -2,12 +2,6 @@
     <div><p class="eyebrow">CATÁLOGO & ESTOQUE</p><h1>Acervo do sebo<span class="heading-dot">.</span></h1><p>Cada edição, cada marca do tempo, tudo no seu lugar.</p></div>
     <a class="btn btn-primary" href="<?= e(url(['page'=>'new'])) ?>"><span aria-hidden="true">＋</span> Cadastrar livro</a>
 </div>
-<div class="catalog-summary" aria-label="Resumo dos livros ativos">
-    <div><strong><?= number_format($summary['titles'],0,',','.') ?></strong><span>títulos no acervo</span></div>
-    <div><strong><?= number_format($summary['units'],0,',','.') ?></strong><span>exemplares disponíveis</span></div>
-    <div><strong><?= money((int)$summary['value']) ?></strong><span>valor a preço de venda</span></div>
-    <a href="<?= e(url(['page'=>'books','status'=>'low'])) ?>"><strong><?= $summary['low'] ?></strong><span>títulos para repor ↗</span></a>
-</div>
 <section class="panel catalog-panel" aria-label="Consulta do acervo">
     <form method="get" class="catalog-search" role="search">
         <input type="hidden" name="page" value="books"><input type="hidden" name="status" value="<?= e($status) ?>">
@@ -32,8 +26,8 @@
     <?php if (!$listing['total']): ?>
     <div class="empty-state">
         <div class="shelf-illustration" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-        <h2><?= $summary['titles'] || $status || $query || $category || $conditionFilter || $featureFilter ? 'Nenhum livro nesta seleção' : 'Sua estante começa aqui' ?></h2>
-        <p><?= $summary['titles'] || $status || $query || $category || $conditionFilter || $featureFilter ? 'Ajuste a busca ou os filtros para encontrar outros exemplares.' : 'Cadastre o primeiro livro com sua edição, conservação e localização.' ?></p>
+        <h2><?= $status || $query || $category || $conditionFilter || $featureFilter ? 'Nenhum livro nesta seleção' : 'Sua estante começa aqui' ?></h2>
+        <p><?= $status || $query || $category || $conditionFilter || $featureFilter ? 'Ajuste a busca ou os filtros para encontrar outros exemplares.' : 'Cadastre o primeiro livro com sua edição, conservação e localização.' ?></p>
         <a class="btn btn-outline-primary" href="<?= e(url(['page'=>'new'])) ?>">Cadastrar um livro</a>
     </div>
     <?php else: ?>

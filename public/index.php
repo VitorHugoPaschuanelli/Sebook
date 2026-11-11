@@ -80,8 +80,7 @@ try {
         try { $book = $inventory->find($id); } catch (DomainException) { http_response_code(404); exit('Livro não encontrado.'); }
         if ($page === 'edit' && $book['archived']) { redirect(['page'=>'book','id'=>$id], 'Reative o livro antes de editar.'); }
     }
-    $summary = $inventory->summary();
-    $categories = $inventory->categories();
+    if (in_array($page, ['books', 'new', 'edit'], true)) { $categories = $inventory->categories(); }
     $query = mb_substr(trim(field($_GET, 'q')), 0, 200);
     $status = field($_GET, 'status');
     $category = field($_GET, 'category');
