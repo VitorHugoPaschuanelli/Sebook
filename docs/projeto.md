@@ -1,4 +1,4 @@
-# Escopo e decisões do MVP
+# Regras e decisões do Sebook
 
 ## Objetivo
 
@@ -14,7 +14,7 @@ Permitir que um sebo organize seu acervo localmente, cadastre livros e acompanhe
 - Alterar cadastro não altera quantidade. Movimentações e saldo são gravados juntos em transação, com atualização condicional que impede saldo negativo.
 - Movimentações não são apagadas nem editadas. Erros são corrigidos por uma nova movimentação inversa, com justificativa.
 - Arquivamento só é permitido com saldo zero. O cadastro e seu histórico são preservados e podem ser reativados.
-- Preço é um inteiro em centavos. O painel não representa receita, lucro ou valor de aquisição.
+- Preços e custos são armazenados como inteiros em centavos.
 - As datas são registradas no fuso de São Paulo.
 
 ## Particularidades de sebos
@@ -37,7 +37,7 @@ O banco é criado automaticamente e fica fora da raiz pública. `SEBOOK_DB_PATH`
 
 Consultas parametrizadas, escape de saída HTML, validação no servidor, token CSRF nos formulários, redirecionamento após POST e cookies de sessão HttpOnly/SameSite. O JavaScript desabilita o botão durante o envio para evitar duplo clique. A aplicação é local, sem autenticação e sem controle de múltiplos usuários.
 
-## Fora desta versão
+## Limites do sistema
 
 Clientes, fornecedores, contas de acesso, caixa, emissão fiscal, relatórios financeiros, leitura automática de código de barras, importação, fotos/capas, sincronização na nuvem e hospedagem. A baixa com motivo Venda é uma movimentação de estoque, não uma venda com pagamento ou comprovante.
 
