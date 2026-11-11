@@ -7,7 +7,6 @@
     <title><?= e($title) ?> · Sebook</title>
     <link rel="stylesheet" href="/assets/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="/style.css">
-    <script src="/assets/bootstrap/bootstrap.bundle.min.js" defer></script>
     <script src="/app.js" defer></script>
 </head>
 <body>

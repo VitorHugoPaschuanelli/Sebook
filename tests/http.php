@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-// Executado por run-http.php com servidor e banco descartáveis.
 require dirname(__DIR__) . '/vendor/autoload.php';
 $base = $argv[1] ?? '';
 $dbPath = getenv('SEBOOK_DB_PATH') ?: '';
@@ -41,7 +40,7 @@ $home = request('/');
 verify($home['status'] === 200 && str_contains($home['body'], 'Acervo do sebo'), 'Abertura direta no acervo');
 verify(!str_contains($home['body'], 'Visão geral'), 'Página inicial antiga removida');
 verify(request('/?page=home')['status'] === 302, 'Atalho antigo redireciona ao acervo');
-foreach (['/assets/bootstrap/bootstrap.min.css', '/assets/bootstrap/bootstrap.bundle.min.js', '/style.css', '/app.js'] as $asset) {
+foreach (['/assets/bootstrap/bootstrap.min.css', '/style.css', '/app.js'] as $asset) {
     verify(request($asset)['status'] === 200, 'Arquivo público: ' . $asset);
 }
 foreach (['/composer.json', '/database/sebook.sqlite', '/.git/config', '/?page=inexistente', '/?page=book&id=9999'] as $path) {

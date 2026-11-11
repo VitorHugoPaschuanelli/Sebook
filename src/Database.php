@@ -23,7 +23,6 @@ final class Database
             throw new RuntimeException('O banco foi criado por uma versão mais recente do Sebook.');
         }
         if ($version < 2) {
-            // VACUUM INTO produz uma cópia consistente antes de alterar um banco existente.
             if ($version > 0 && $path !== ':memory:') {
                 $backup = $path . '.before-v2-' . date('Ymd-His') . '-' . bin2hex(random_bytes(3)) . '.bak';
                 $db->exec('VACUUM INTO ' . $db->quote($backup));

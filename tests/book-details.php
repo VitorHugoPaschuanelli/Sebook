@@ -34,7 +34,6 @@ assertDetail($book['quantity'] === 2 && $inventory->history($id)['total'] === 1,
 foreach ([['features'=>['invalido']],['features'=>'signed'],['features'=>[['signed']]],['publication_year'=>'2101'],['publication_year'=>'-10'],['cost'=>'-1'],['binding'=>'Papel'],['provenance'=>'Inválida']] as $invalid) {
     rejectDetail(fn()=>$inventory->create(array_replace($data,$invalid)));
 }
-// Migra um banco antigo real e confirma cópia de segurança e preservação dos dados.
 $path = dirname(__DIR__) . '/storage/migration-test-' . bin2hex(random_bytes(6)) . '.sqlite';
 try {
     $legacy = new PDO('sqlite:'.$path);
